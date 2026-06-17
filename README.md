@@ -1,0 +1,116 @@
+# 🏢 Coworking Space Booking System
+
+> Hệ thống đặt chỗ làm việc chung thông minh với quy trình quản lý tự động và thanh toán trực tuyến
+
+## 📋 Mục lục
+- [Giới thiệu](#giới-thiệu)
+- [Context Diagram](#-1-context-diagram-dfd-level-0)
+- [Swimlane Diagram](#-2-swimlane-diagram-activity-diagram)
+- [State Diagram](#-3-state-diagram-space-reservation)
+
+---
+
+## Giới thiệu
+
+Tài liệu này trình bày **chi tiết ba sơ đồ thiết kế hệ thống**: Context Diagram, Swimlane Diagram và State Diagram cho hệ thống đặt chỗ làm việc chung (Coworking Space Booking System).
+
+---
+
+## 📊 1. Context Diagram (DFD Level 0)
+
+### Tổng quan
+Context Diagram thể hiện hệ thống ở trung tâm và các luồng trao đổi dữ liệu với **bốn tác nhân bên ngoài**: User, Space Manager, Admin và Payment System.
+
+### Bảng luồng dữ liệu
+
+| 👤 Tác nhân | 📥 Dữ liệu đầu vào | 📤 Dữ liệu đầu ra |
+|-------------|-------------------|-------------------|
+| **User** | Browse spaces<br>Select slot<br>Login, Book<br>Cancel, Reschedule, Track<br>**Prepayment** | Confirmations<br>Status/Availability/Space info<br>**Prepay, Billing** |
+| **Space Manager** | Define Availability<br>Space Details<br>(including weekly/monthly discounts) | Defined Availability<br>Status<br>Approval Updates |
+| **Admin** | Approve Space slots<br>Enable Booking | Approval Requests<br>Defined Availability<br>System Stats |
+| **Payment System** | **Payment Confirmation**<br>**Refund Confirmation** | **Payment Request**<br>**Transaction info** |
+
+### 🎯 Ý nghĩa
+Context Diagram cho thấy toàn bộ luồng trao đổi giữa người dùng, quản lý không gian, quản trị viên và cổng thanh toán với hệ thống. Các nghiệp vụ chính bao gồm:
+- ✅ Prepay (thanh toán trước)
+- ✅ Duyệt slot (approval workflow)
+- ✅ Hoàn tiền (refund)
+- ✅ Xác nhận đặt chỗ (confirmation)
+
+![Context Diagram](Contexxt_Diagram.png)
+
+---
+
+## 🔄 2. Swimlane Diagram (Activity Diagram)
+
+### Tổng quan
+Swimlane Diagram mô tả **quy trình đặt chỗ hoàn chỉnh** theo từng vai trò, từ tìm kiếm đến xác nhận đặt chỗ thành công.
+
+### Bảng quy trình theo vai trò
+
+| 🎭 Vai trò | 📝 Chuỗi hoạt động |
+|-----------|-------------------|
+| **👤 User** | Search Space → Browse Results → Check Availability (by Location/Date) → Select Space (Shared Desk, Private Office, Meeting Room) → Book → **Proceed to Prepay** → Receive Confirmation (SMS/Email) |
+| **⚙️ System** | Display Available Spaces → Display Booking Forms/Discounts → **Payment Request** → Check Payment Status → Payment Successfully? → **Yes:** Change State to Paid → Send SMS/Email Confirmation → Maintain Login (track/reschedule/cancel) → Process cancellations (checks **12-hour rule**) → Help Section<br><br>🔒 **Security:** Uses Encryption, Google Login |
+| **🏢 Space Manager** | Login → Define Availability (Spaces, Slots, Discounts) → **Submit for Approval** |
+| **👨‍💼 Admin** | Login → Review Availability Submissions → **Approve & Enable Booking** → Send notification to System |
+
+### 🔗 Điểm kết nối quan trọng
+Luồng **"Submit for Approval"** của Space Manager được chuyển đến Admin để duyệt. Sau khi Admin phê duyệt, hệ thống sẽ cập nhật và cho phép User đặt chỗ.
+
+![Swimlane Diagram](swinlane_diaagram.png)
+
+---
+
+## 🔀 3. State Diagram (Space Reservation)
+
+### Tổng quan
+State Diagram mô tả **vòng đời đầy đủ** của một Space Reservation, bao gồm các trạng thái chính và các nhánh xử lý đặc biệt.
+
+### 📌 Luồng chính (Main Flow)
+
+```
+Start → Requested → Paid → Confirmed → Used → Archived
+         ↓           ↓        ↓
+    (Prepay)  (SMS/Email) (Start time)
+```
+
+**Chi tiết:**
+1. **Start** → **Requested**: Người dùng tạo yêu cầu đặt chỗ
+2. **Requested** → **Paid**: Customer prepays online
+3. **Paid** → **Confirmed**: System confirms & sends SMS/Email
+4. **Confirmed** → **Used**: Start time reached
+5. **Used** → **Archived**: Usage ends / End time reached
+
+### ❌ Nhánh hủy/hoàn tiền (Cancellation/Refund Flow)
+
+| Chuyển đổi | Điều kiện |
+|-----------|-----------|
+| **Requested → Cancelled** | Payment fails HOẶC User cancels request |
+| **Confirmed → Cancelled** | Customer cancels (≥12h trước giờ bắt đầu) |
+| **Cancelled → Refunded** | System initiates refund |
+
+### 🔄 Nhánh đổi lịch (Reschedule Flow)
+
+| Chuyển đổi | Điều kiện |
+|-----------|-----------|
+| **Cancelled → Requested** | Customer reschedules (đặt lại slot mới) |
+
+### 💡 Ghi chú quan trọng
+- **Billing** diễn ra khi đã ở trạng thái **Paid** trước khi chuyển sang **Confirmed**
+- Quy tắc hủy: Chỉ hoàn tiền nếu hủy **≥12 giờ** trước thời gian đặt
+
+![State Diagram](statte_diaggranm.png)
+
+---
+
+## 📄 Tài liệu bổ sung
+
+- [AI Audit Log Example](AI_AuditLog_Example.xlsx) - Mẫu nhật ký kiểm toán
+- [Diagram Source](ContexDiagram_SwinlaneDiagram_StateDiagram_Lab1_DE6.drawio) - File nguồn các sơ đồ
+
+---
+
+**📧 Contact:** nguyenvangiang232005@gmail.com  
+**👨‍💻 Author:** Nguyen Van Dang  
+**📅 Last Updated:** June 2026
